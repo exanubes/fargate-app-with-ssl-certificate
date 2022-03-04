@@ -1,0 +1,30 @@
+{
+  "name": "infrastructure",
+  "version": "0.1.0",
+  "bin": {
+    "infrastructure": "bin/infrastructure.js"
+  },
+  "scripts": {
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "build": "tsc && trash cdk.out && npm run cdk synth",
+    "cdk:destroy": "npm run cdk destroy -- --app cdk.out $npm_config_stacks --role-arn=arn:aws:iam::$(aws sts get-caller-identity --query 'Account' --output text):role/exanubes-cloudformation-access",
+    "cdk:deploy": "npm run cdk deploy -- --app cdk.out $npm_config_stacks --role-arn=arn:aws:iam::$(aws sts get-caller-identity --query 'Account' --output text):role/exanubes-cloudformation-access"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.10",
+    "@types/node": "10.17.27",
+    "aws-cdk": "2.15.0",
+    "jest": "^26.4.2",
+    "trash-cli": "^5.0.0",
+    "ts-jest": "^26.2.0",
+    "ts-node": "^9.0.0",
+    "typescript": "~3.9.7"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.15.0",
+    "constructs": "^10.0.0",
+    "source-map-support": "^0.5.16"
+  }
+}
