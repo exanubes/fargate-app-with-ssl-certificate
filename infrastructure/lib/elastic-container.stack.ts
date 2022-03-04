@@ -13,7 +13,9 @@ import {
 import {
     ApplicationLoadBalancer,
     ApplicationProtocol,
-    ApplicationProtocolVersion
+    ApplicationProtocolVersion,
+    IApplicationLoadBalancer, ListenerAction,
+    SslPolicy
 } from "aws-cdk-lib/aws-elasticloadbalancingv2";
 
 
@@ -23,8 +25,11 @@ interface Props extends StackProps {
 }
 
 const CONTAINER_PORT = 8081
+const CERTIFICATE_ARN = "arn:aws:acm:eu-central-1:123456789012:certificate/uuid"
 
 export class ElasticContainerStack extends Stack {
+    public readonly loadBalancer: IApplicationLoadBalancer
+
     constructor(scope: Construct, id: string, props: Props) {
         super(scope, id, props)
         const cluster = new Cluster(this, "exanubes-cluster", {
@@ -33,14 +38,13 @@ export class ElasticContainerStack extends Stack {
             containerInsights: true,
         })
 
-
         const albSg = new SecurityGroup(this, "security-group-load-balancer", {
             vpc: props.vpc,
             allowAllOutbound: true,
         })
-        albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(CONTAINER_PORT))
+        albSg.addIngressRule(Peer.anyIpv4(), Port.tcp(443))
 
-        const loadBalancer = new ApplicationLoadBalancer(this, "exanubes-alb", {
+        this.loadBalancer = new ApplicationLoadBalancer(this, "exanubes-alb", {
             vpc: props.vpc,
             loadBalancerName: "exanubes-ecs-alb",
             internetFacing: true,
@@ -50,14 +54,24 @@ export class ElasticContainerStack extends Stack {
             deletionProtection: false,
         })
 
-        const httpListener = loadBalancer.addListener("http listener", {
-            port: CONTAINER_PORT,
+        const httpListener = this.loadBalancer.addListener("http listener", {
+            port: 80,
             open: true,
-            protocol: ApplicationProtocol.HTTP
+            defaultAction: ListenerAction.redirect({
+                port: "443",
+                protocol: ApplicationProtocol.HTTPS,
+            }),
         })
 
-        const targetGroup = httpListener.addTargets("tcp-listener-target", {
-            targetGroupName: "tcp-target-ecs-service",
+        const sslListener = this.loadBalancer.addListener("secure https listener", {
+            port: 443,
+            open: true,
+            sslPolicy: SslPolicy.RECOMMENDED,
+            certificates: [{certificateArn: CERTIFICATE_ARN}],
+        })
+
+        const targetGroup = sslListener.addTargets('tcp-listener-target', {
+            targetGroupName: 'tcp-target-ecs-service',
             protocol: ApplicationProtocol.HTTP,
             protocolVersion: ApplicationProtocolVersion.HTTP1,
         })
@@ -78,8 +92,6 @@ export class ElasticContainerStack extends Stack {
         container.addPortMappings({
             containerPort: CONTAINER_PORT,
         })
-
-
 
 
         const securityGroup = new SecurityGroup(this, "http-sg", {

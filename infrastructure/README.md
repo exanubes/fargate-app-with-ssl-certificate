@@ -1,14 +1,14 @@
-# ECS Fargate Deployment
+# Fargate App with SSL Certificate
 
 
-Repository from [exanubes.com](https://exanubes.com) for [Deploying ECS Fargate Application](https://exanubes.com/blog/deploying-ecs-fargate-application).
+Repository from [exanubes.com](https://exanubes.com) for [Deploying ECS Fargate Application](https://exanubes.com/blog/adding-ssl-certificate-to-fargate-app).
 
 
 This repository is using AWS CDK v2 and is not compatible with AWS CDK v1 bootstrap stack.
 
 ## Commands:
 
-Run the following commands for building, deploying and destroying the stacks
+Run the following commands for building, deploying and destroying stacks
 
 ```
 npm run build
